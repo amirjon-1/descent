@@ -134,10 +134,13 @@ class RmsPropStepFunction:
         self.learning_rate = learning_rate
         self.decay_rate = decay_rate
         self.delta = delta
-        self.squared_grad_avg = torch.tensor([0,0])
-        
+        self.squared_grad_avg = None
+    
     def __call__(self, pos):
         grad = self.loss_gradient(pos)
-        self.squared_grad_avg = self.decay_rate * self.squared_grad_avg + (1-self.decay_rate) * grad ** 2
-        step = -self.learning_rate * grad / (self.delta + torch.sqrt(self.squared_grad_avg))
+        if self.squared_grad_avg is None:
+            self.squared_grad_avg = grad**2
+        else:
+            self.squared_grad_avg = self.decay_rate * self.squared_grad_avg + (1 - self.decay_rate) * grad**2
+        step = -self.learning_rate * grad / (torch.sqrt(self.squared_grad_avg) + self.delta)
         return step
